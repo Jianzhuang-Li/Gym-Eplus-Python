@@ -1,0 +1,5 @@
+{
+    "python.analysis.extraPaths": [
+        "C:/EnergyPlusV24-1-0"
+    ]
+}
