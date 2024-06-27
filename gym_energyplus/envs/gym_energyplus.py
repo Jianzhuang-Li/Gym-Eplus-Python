@@ -44,8 +44,9 @@ class GymEnergyPlus:
         logger.info(f"IDF: {self.idf}")
 
         self.run_cout = 0
-
+        # define the handle used in simulation, handle_name:(var_name, var_key)
         self.handle_define_map = {}
+        # save the handles got in runing 
         self.handle_map = {}
         self.got_handle = False
         self.set_handle()
@@ -100,7 +101,27 @@ class GymEnergyPlus:
     def render(self):
         pass
 
-    def callback_begin_zone_timestep_after_init_heat_balance(self, state_arguement):
+    def callable_begin_new_environment(self, state_argument):
+        """
+        1. Occurs once near the beginning of each environment period. 
+        2. Environment periods include sizing periods, design days, and run periods.
+        3. This calling point will not be useful for control actions, but is useful for initializing
+        variables and calculations that do not need to be repeated during each timestep.
+        """
+        return None
+    
+    def callback_begin_zone_timestep_before_init_heat_balance(self, state_argument)->None:
+        """
+        1. This calling point is useful for controlling components that affect the building envelope 
+        including surface constructions, window shades, and shading surfaces.
+        2. Programs called from this point might actuate the building envelope or internal gains based
+        on current weather or on the results from the previous timestep.
+        3. Demand management routines might use this calling point to operate window shades, 
+        change active window constructions, activate exterior shades, etc.
+        """
+        return None
+
+    def callback_begin_zone_timestep_after_init_heat_balance(self, state_arguement)->None:
         """
         2. This calling point is useful for controlling components that affect the building envelope
         including surface constructions and window shades. 
@@ -119,7 +140,7 @@ class GymEnergyPlus:
             self.logger.info(f"call back state: {self.callback_state}, sim_time:{current_sim_time}, temp:{temp1}")
             self.callback_state = self.callback_state + 1
 
-    def callback_after_predictor_before_hvac_managers(self, state_argument):
+    def callback_after_predictor_before_hvac_managers(self, state_argument)->None:
         """
         1. It occurs at each timestep just after the predictor executes but before SetpointManager and AvailabilityManager models are called.
         2. It is useful for a variety of control actions.
@@ -141,8 +162,15 @@ class GymEnergyPlus:
     
     def callback_begin_system_timestep_before_predictor(self, state_argument)->None:
         """
-        
+        1. The calling point called “BeginTimestepBeforePredictor” occurs near the beginning of each timestep 
+        but before the predictor executes. 
+        2. “Predictor” refers to the step in EnergyPlus modeling when the zone loads are calculated. 
+        3. This calling point is useful for controlling components that affect the thermal loads the
+        HVAC systems will then attempt to meet. 
+        4. Programs called from this point might actuate internal gains based on current weather or on the results from the previous timestep.
+        5. Demand management routines might use this calling point to reduce lighting or process loads, change thermostat settings, etc.
         """
+        return None
 
     def callback_after_component_get_input(self, state_argument)->None:
         return None
@@ -152,8 +180,24 @@ class GymEnergyPlus:
         """
         Register callback function to an active EnergyPlus “state”.
         """
-        self.api.runtime.callback_begin_zone_timestep_after_init_heat_balance(self.eps_state, self.callback_begin_zone_timestep_after_init_heat_balance)
-        self.api.runtime.callback_after_predictor_after_hvac_managers(self.eps_state, self.callback_after_predictor_after_hvac_managers)
+        self.api.runtime.callback_begin_new_environment \
+            (self.eps_state, self.callable_begin_new_environment)
+        
+        self.api.runtime.callback_begin_zone_timestep_before_init_heat_balance \
+            (self.eps_state, self.callback_begin_zone_timestep_before_init_heat_balance)
+        
+        self.api.runtime.callback_begin_zone_timestep_after_init_heat_balance \
+            (self.eps_state, self.callback_begin_zone_timestep_after_init_heat_balance)
+        
+        self.api.runtime.callback_begin_system_timestep_before_predictor \
+            (self.eps_state, self.callback_begin_system_timestep_before_predictor)
+
+        self.api.runtime.callback_after_predictor_before_hvac_managers \
+            (self.eps_state, self.callback_after_predictor_before_hvac_managers)
+        
+        self.api.runtime.callback_after_predictor_after_hvac_managers \
+            (self.eps_state, self.callback_after_predictor_after_hvac_managers)
+        
     
     def run(self)->None:
         """
