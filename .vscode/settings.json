@@ -1,5 +1,6 @@
 {
     "python.analysis.extraPaths": [
-        "C:/EnergyPlusV24-1-0"
-    ]
+        "E://Program_Files//EnergyPlusV24_1_0"
+    ],
+    "python.autoComplete.extraPaths": []
 }
