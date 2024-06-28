@@ -1,3 +1,5 @@
 {
-    "EnergyPlusPath": "/usr/local/EnergyPlus-24-1-0"
+    "EnergyPlusPath_v23_win32": "E://Program_Files//EnergyPlusV23-1-0",
+    "EnergyPlusPath_v24_win32": "E://Program_Files//EnergyPlusV24_1_0",
+    "EnergyPlusPath_v24_linux": "/usr/local/EnergyPlus-24-1-0"
 }
