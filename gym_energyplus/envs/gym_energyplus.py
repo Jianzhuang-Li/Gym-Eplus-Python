@@ -46,42 +46,136 @@ class GymEnergyPlus:
 
         self.run_cout = 0
         # define the handle used in simulation, handle_name:(var_name, var_key)
-        self.handle_define_map = {}
-        # save the handles got in runing 
-        self.handle_map = {}
-        self.got_handle = False
-        self.set_handle()
+        # the variable handles  
+        self.variable_handle_define_map = {}
+        self.variable_handle_map = {}
+        self.set_variable_handle()
+        self.got_variable_handle = False
+        # the actuator handles  
+        self.actuator_handle_define_map = {}
+        self.actuator_handle_map = {}
+        self.set_actuator_handle()
+        self.got_actuator_handle = False
+        # the internal variable handle
+        self.internal_variable_handle_define_map = {}
+        self.internal_variable_handle_map = {}
+        self.set_internal_variable_handle()
+        self.got_internal_variable_handle = False
+        # the meter handle
+        self.meter_handle_define_map = {}
+        self.meter_handle_map = {}
+        self.set_meter_handle()
+        self.got_meter_handle = False
+       
         self.set_callback()
     
-    def set_handle(self)->None:
+    def set_variable_handle(self)->None:
         """
-        Set handle name, variable name and key.
+        Set handle name, variable name and key for variable handle.
         The handle define map will be used by get_handle().
         """
-        self.handle_define_map['T1'] = ("Zone Mean Air Temperature", "Perimeter_ZN_1")
-        self.got_handle = False
+        # self.handle_define_map['T1'] = ("Zone Mean Air Temperature", "Perimeter_ZN_1")
+        self.got_variable_handle = False
+        self.variable_handle_define_map['OAT'] = ("Site Outdoor Air Drybulb Temperature", "Environment")
 
-    def get_handle(self):
+    def set_actuator_handle(self):
+        """
+         Set handle name, variable name and key for actuator handle.
+        """
+        self.got_actuator_handle = False
+        self.actuator_handle_define_map['Basement_Lights_Actuator'] = ("Lights", "Electricity Rate", "Basement_lights")
+
+    def set_internal_variable_handle(self):
+        """
+        Set the handle to an internal variable in a running simulation.
+        """
+        self.got_internal_variable_handle = False
+
+    def set_meter_handle(self):
+        """
+        Set the handle to a meter in a running simulation.
+        """
+        self.got_meter_handle = False
+
+    def get_actuator_handle(self)->None:
+
+        if not self.got_actuator_handle:
+            self.actuator_handle_map.clear()
+            if self.api.exchange.api_data_fully_ready(self.eps_state):
+                for handle_name, var in self.actuator_handle_define_map.items():
+                    component_type, control_type, actuator_key = var
+                    self.actuator_handle_map[handle_name] = self.api.exchange.get_actuator_handle(self.eps_state, component_type, control_type, actuator_key)
+                    self.logger.info(f"Get actuator handle named {handle_name}")
+            else:
+                # self.logger.warning(f"Get actuator handle failed!")
+                return
+        for handle_na, handle_var in self.actuator_handle_map.items():
+            if handle_var == -1:
+                self.logger.info(f"Invalid actour handle named {handle_na}")
+                sys.exit(1)
+        self.got_actuator_handle = True
+
+    def get_variable_handle(self)->None:
         """
         Get handle via api.exchange.get_variable_handle.
         """
-        if not self.got_handle:
-            self.handle_map.clear()
+        if not self.got_variable_handle:
+            self.variable_handle_map.clear()
             # Check whether the data exchange API is ready
-            if not self.api.exchange.api_data_fully_ready(self.eps_state):
-                for handle_name, var in self.handle_define_map.items():
+            if self.api.exchange.api_data_fully_ready(self.eps_state):
+                for handle_name, var in self.variable_handle_define_map.items():
                     var_name, var_key = var
-                    self.handle_map[handle_name] = self.api.exchange.get_variable_handle(self.eps_state, var_name, var_key)
-                    self.logger.info(f"Get handle {handle_name, var_name, var_key}.")
+                    self.variable_handle_map[handle_name] = self.api.exchange.get_variable_handle(self.eps_state, var_name, var_key)
+                    self.logger.info(f"Get variable handle {handle_name, var_name, var_key}.")
             else:
                 return
             # Check if there are invalid handles.
-            for handle_na, handle_var in self.handle_map.items():
+            for handle_na, handle_var in self.variable_handle_map.items():
                 if handle_var == -1:
-                    self.logger.warning(f"Invalid handle named {handle_na}")
+                    self.logger.warning(f"Invalid variable handle named {handle_na}")
                     sys.exit(1)
-            self.got_handle = True
+            self.got_variable_handle = True
     
+    def get_internal_variable_handle(self)->None:
+        """
+        Get a handle to an internal variable in a running simulation.
+        """
+        if not self.got_internal_variable_handle:
+            self.internal_variable_handle_map.clear()
+            # Check whether the data exchange API is ready
+            if self.api.exchange.api_data_fully_ready(self.eps_state):
+                for handle_name, var in self.internal_variable_handle_define_map.items():
+                    var_name, var_key = var
+                    self.internal_variable_handle_map[handle_name] = self.api.exchange.get_internal_variable_handle(self.eps_state, var_name, var_key)
+                    self.logger.info(f"Get internal variable handle {handle_name, var_name, var_key}.")
+            else:
+                return
+            # Check if there are invalid handles.
+            for handle_na, handle_var in self.internal_variable_handle_map.items():
+                if handle_var == -1:
+                    self.logger.warning(f"Invalid internal variable handle named {handle_na}")
+                    sys.exit(1)
+            self.got_internal_variable_handle = True
+        return None
+    
+    def get_meter_handle(self)->None:
+        """
+        Get a handle to a meter in a running simulation.
+        """
+        if not self.got_meter_handle:
+            self.meter_handle_map.clear()
+            if self.api.exchange.api_data_fully_ready(self.eps_state):
+                for handle_name, meter_name in self.meter_handle_define_map.items():
+                    self.meter_handle_map[handle_name] = self.api.exchange.get_meter_handle(self.eps_state, meter_name)
+                    self.logger.info(f"Get meter handle {handle_name, meter_name}")
+            else:
+                return
+            for handle_na, handle_var in self.meter_handle_map.items():
+                if handle_var == -1:
+                    self.logger.warning(f"Invalid meter handle named {handle_na}")
+                    sys.exit(1)
+            self.got_meter_handle = True
+                
     def _get_obs(self):
         pass
     
@@ -122,7 +216,7 @@ class GymEnergyPlus:
         """
         return None
 
-    def callback_begin_zone_timestep_after_init_heat_balance(self, state_arguement)->None:
+    def callback_begin_zone_timestep_after_init_heat_balance(self, state_argument)->None:
         """
         2. This calling point is useful for controlling components that affect the building envelope
         including surface constructions and window shades. 
@@ -131,8 +225,17 @@ class GymEnergyPlus:
         4. Demand management routines might use this calling point to operate window shades, change active window constructions, etc. 
         5. This calling point would be an appropriate place to modify weather data values.
         """
-        self.get_handle()
+        self.get_variable_handle()
         hour = self.hour()
+        num_timestep = self.num_time_steps_in_hour()
+        timestep = self.zone_time_step_number()
+       
+        if self.got_variable_handle and  hour == 23 and timestep == num_timestep:
+            day = self.day_of_year()
+            OAT = self.api.exchange.get_variable_value(state_argument, self.variable_handle_map['OAT'])
+            self.logger.info(f"current day :{day}, temp:{OAT}")
+        """
+        
         if hour == 23:
             if not self.got_handle:
                 return 
@@ -140,6 +243,7 @@ class GymEnergyPlus:
             current_sim_time = self.current_sim_time()
             self.logger.info(f"call back state: {self.callback_state}, sim_time:{current_sim_time}, temp:{temp1}")
             self.callback_state = self.callback_state + 1
+        """
 
     def callback_after_predictor_before_hvac_managers(self, state_argument)->None:
         """
@@ -147,7 +251,6 @@ class GymEnergyPlus:
         2. It is useful for a variety of control actions.
         3. However, if there are conflicts, the EMS control actions could be overwritten by other SetpointManager or AvailabilityManager actions.
         """
-        self.get_handle()
         return None
 
     def callback_after_predictor_after_hvac_managers(self, state_argument)->None:
@@ -158,7 +261,16 @@ class GymEnergyPlus:
         3. However, if there are conflicts, SetpointManager or AvailabilityManager actions may be
         overwritten by EMS control actions.
         """
-        self.get_handle()
+        self.get_actuator_handle()
+        hour = self.hour()
+        num_timestep = self.num_time_steps_in_hour()
+        timestep = self.zone_time_step_number()
+       
+        if self.got_actuator_handle and  hour == 23 and timestep == num_timestep:
+            day = self.day_of_year()
+            rate = self.api.exchange.get_actuator_value(state_argument, self.actuator_handle_map['Basement_Lights_Actuator'])
+            self.logger.info(f"current day :{day}, basement_light_electricity_rate:{rate}")
+
         return None
     
     def callback_begin_system_timestep_before_predictor(self, state_argument)->None:
@@ -229,7 +341,7 @@ class GymEnergyPlus:
         """
         Get the current day of the year (1-366).
         """
-        return self.api.exchange.day_of_year(self.day_of_year)
+        return self.api.exchange.day_of_year(self.eps_state)
     
     def day_of_month(self)->int:
         """
