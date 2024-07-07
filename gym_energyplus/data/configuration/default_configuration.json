@@ -1,0 +1,35 @@
+{
+    "variables": {
+        "CHILLER1_E": {
+            "variable_name": "Chiller Electricity Energy",
+            "variable_key": "CoolSys1 Chiller1"
+        },
+        "HeatSysl_Boiler_E": {
+            "variable_name": "Boiler NaturalGas Energy",
+            "variable_key": "HeatSys1 Boiler"
+        },
+        "Core_top_temp": {
+            "variable_name": "Zone Mean Air Temperature",
+            "variable_key": "Core_top"
+        }
+    },
+    "actuators": {
+        "CoolSys1_Loop_Plant_Demand_Inlet_Setpoint": {
+            "component_type": "System Node Setpoint",
+            "control_type": "Temperature Setpoint",
+            "actuator_type": "COOLSYS1 DEMAND INLET NODE"
+        },
+        "CoolSys1_Loop_Setpoint": {
+            "component_type": "System Node Setpoint",
+            "control_type": "Temperature Setpoint",
+            "actuator_type": "COOLSYS1 SUPPLY OUTLET NODE"
+        }
+    },
+    "internal_variables": {},
+    "meters": {},
+    "path": {
+        "weather_file": "D:\\lijianzhuang\\Reaserch\\new-research\\Gym-EnergyPlus\\DRL-EnergyPlus\\gym_eplus\\gym_energyplus\\data\\weather\\USA_NY_New.York-John.F.Kennedy.Intl.AP.744860_TMY3.epw",
+        "idf_file": "D:\\lijianzhuang\\Reaserch\\new-research\\Gym-EnergyPlus\\DRL-EnergyPlus\\gym_eplus\\gym_energyplus\\data\\buildings\\ASHRAE901_OfficeLarge_STD2022_NewYork.idf",
+        "out_path": "D:\\lijianzhuang\\Reaserch\\new-research\\Gym-EnergyPlus\\DRL-EnergyPlus\\gym_eplus\\out"
+    }
+}
